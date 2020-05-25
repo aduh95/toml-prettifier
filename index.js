@@ -4,10 +4,17 @@ const LINE_LENGTH_LIMIT = 80;
 
 const NORMAL_MODE = Symbol("normal mode");
 const MULTILINE_ARRAY_MODE = Symbol("array mode");
-const MULTILINE_LITERAL_STRING_MODE = Symbol("multiline mode");
+const MULTILINE_BASIC_STRING_MODE = Symbol("multiline basic string mode");
+const MULTILINE_LITERAL_STRING_MODE = Symbol("multiline literal string mode");
 
-const importantBits = /^\s*((?:"(?:\\"|[^"])+"|'(?:\\'|[^'])+'|[^#])*)\s*(#+.*)?$/;
-const arrayDeclaration = /^(?:"(?:\\"|[^"])+"|'(?:\\'|[^'])+'|[^="']+)=\s*\[/;
+const importantBits = /^\s*((?:"(?:\\"|[^"])+"|'[^']+'|[^#])*)\s*(#+.*)?$/;
+const arrayDeclaration = /^(?:"(?:\\"|[^"])+"|'[^']+'|[^="']+)=\s*\[/;
+
+const basicStringOpening = /=\s*"""(.*)$/;
+const literalStringOpening = /=\s*'''(.*)$/;
+const singlelineMultilineStringDeclaration = /=\s*""".*[^\\]"""$/;
+const singlelineMultilineLiteralStringDeclaration = /=\s*'''.*'''$/;
+
 const indent = (indentationLevel) => " ".repeat(indentationLevel * 2);
 
 const unquoteKey = /^["'](\w+)["']\s*$/;
@@ -80,24 +87,36 @@ export async function* prettify(input) {
         }
         break;
 
-      case MULTILINE_LITERAL_STRING_MODE:
+      case MULTILINE_BASIC_STRING_MODE:
         buffer += fullLine + " ";
-        if (fullLine.endsWith("'''")) {
+        if (
+          fullLine.endsWith('"""') &&
+          fullLine.charAt(fullLine.length - 4) !== "\\"
+        ) {
           mode = NORMAL_MODE;
-          const words = buffer.slice(0, -4).split(/\s/);
+          const words = buffer.slice(0, -4).split(/\\\s+|\s/);
           buffer = words.shift();
+          const indentation = indent(indentationLevel + 1);
           for (const word of words) {
             if (word.length === 0) continue;
-            if (buffer.length + word.length + 1 <= LINE_LENGTH_LIMIT) {
+            if (
+              buffer.length + word.length + 1 <=
+              LINE_LENGTH_LIMIT - indentation.length
+            ) {
               buffer += " " + word;
             } else {
-              yield buffer;
+              yield indentation + buffer + "\\";
               buffer = word;
             }
           }
-          yield buffer;
-          yield "'''";
+          yield indentation + buffer + "\\";
+          yield indent(indentationLevel) + '"""';
         }
+        break;
+
+      case MULTILINE_LITERAL_STRING_MODE:
+        if (fullLine.endsWith("'''")) mode = NORMAL_MODE;
+        yield fullLine;
         break;
 
       case NORMAL_MODE:
@@ -115,9 +134,17 @@ export async function* prettify(input) {
             buffer = actualLine;
           }
           continue;
-        } else if (actualLine.endsWith("'''")) {
+        } else if (
+          basicStringOpening.test(actualLine) &&
+          !singlelineMultilineStringDeclaration.test(actualLine)
+        ) {
+          mode = MULTILINE_BASIC_STRING_MODE;
+          buffer = fullLine.match(basicStringOpening)[1];
+        } else if (
+          literalStringOpening.test(actualLine) &&
+          !singlelineMultilineLiteralStringDeclaration.test(actualLine)
+        ) {
           mode = MULTILINE_LITERAL_STRING_MODE;
-          buffer = "";
         }
         const [key, ...value] = actualLine.split("=");
 
