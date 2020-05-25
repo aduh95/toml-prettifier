@@ -6,13 +6,21 @@ const NORMAL_MODE = Symbol("normal mode");
 const MULTILINE_ARRAY_MODE = Symbol("array mode");
 const MULTILINE_LITERAL_STRING_MODE = Symbol("multiline mode");
 
-const importantBits = /^\s*([^#]*)\s*(#+.*)?$/;
+const importantBits = /^\s*((?:"(?:\\"|[^"])+"|'(?:\\'|[^'])+'|[^#])*)\s*(#+.*)?$/;
+const arrayDeclaration = /^(?:"(?:\\"|[^"])+"|'(?:\\'|[^'])+'|[^="']+)=\s*\[/;
 const indent = (indentationLevel) => " ".repeat(indentationLevel * 2);
 
 const unquoteKey = /^["'](\w+)["']\s*$/;
 const renderKey = (key) => {
   const [, actualKey] = key.match(unquoteKey) || [, key.trim()];
   return actualKey;
+};
+
+const printPrettyComment = (comment) => {
+  if (!comment) return "";
+  let i = 0;
+  while (comment[i] === "#") i++;
+  return ` ${comment.substring(0, i)} ${comment.substring(i).trim()}`;
 };
 
 const printPrettySingleLineTable = (table) =>
@@ -51,16 +59,21 @@ export async function* prettify(input) {
 
   let buffer;
 
-  for await (const line of input) {
-    const [, actualLine, comment] = line.match(importantBits) || [];
+  for await (const fullLine of input) {
+    const [, actualLine, comment] = fullLine.match(importantBits) || [];
     if (!actualLine) {
-      yield line.trim();
-      continue; // skip empty lines
+      if (comment)
+        yield indent(indentationLevel) + printPrettyComment(comment).trim();
+      else yield "";
+
+      continue; // skip parsing empty lines
     }
 
     switch (mode) {
       case MULTILINE_ARRAY_MODE:
         buffer += actualLine;
+        if (comment)
+          yield indent(indentationLevel) + printPrettyComment(comment).trim();
         if (actualLine.endsWith("]")) {
           mode = NORMAL_MODE;
           yield* printPrettyArray(buffer, indentationLevel);
@@ -68,8 +81,8 @@ export async function* prettify(input) {
         break;
 
       case MULTILINE_LITERAL_STRING_MODE:
-        buffer += actualLine + " ";
-        if (actualLine.endsWith("'''")) {
+        buffer += fullLine + " ";
+        if (fullLine.endsWith("'''")) {
           mode = NORMAL_MODE;
           const words = buffer.slice(0, -4).split(/\s/);
           buffer = words.shift();
@@ -92,7 +105,9 @@ export async function* prettify(input) {
           indentationLevel = actualLine.split(".").length;
           yield indent(indentationLevel - 1) + actualLine;
           continue;
-        } else if (actualLine.includes("[")) {
+        } else if (arrayDeclaration.test(actualLine)) {
+          if (comment)
+            yield indent(indentationLevel) + printPrettyComment(comment).trim();
           if (actualLine.endsWith("]")) {
             yield* printPrettyArray(actualLine, indentationLevel);
           } else {
@@ -105,6 +120,7 @@ export async function* prettify(input) {
           buffer = "";
         }
         const [key, ...value] = actualLine.split("=");
+
         const prettyValue =
           value[0].trimLeft()[0] === "{"
             ? printPrettySingleLineTable(
@@ -116,7 +132,7 @@ export async function* prettify(input) {
           renderKey(key) +
           " = " +
           prettyValue +
-          (comment || "");
+          printPrettyComment(comment);
         break;
     }
   }
