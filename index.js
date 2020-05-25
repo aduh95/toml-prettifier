@@ -15,14 +15,17 @@ const renderKey = (key) => {
   return actualKey;
 };
 
+const printPrettySingleLineTable = (table) =>
+  `{ ${TOML.stringify(table).trim().split("\n").join(", ")} }`;
+
 function* printPrettyArray(buffer, indentationLevel) {
-  const [key, ...rest] = buffer.split("=");
-  const values = TOML.parse(`values=${rest.join("=")}`).values.map((val) => {
+  const key = buffer.substring(0, buffer.indexOf("="));
+  const values = TOML.parse(buffer.replace(key, "values")).values.map((val) => {
     return "string" === typeof val || "number" === typeof val
       ? JSON.stringify(val)
       : Array.isArray(val)
       ? `[${val.join(", ")}]`
-      : `{ ${TOML.stringify(val).trim().split("\n").join(", ")} }`;
+      : printPrettySingleLineTable(val);
   });
   const keyLine = indent(indentationLevel) + key.trim() + " = [";
   const oneLine = keyLine + values.join(", ") + "]";
@@ -102,10 +105,17 @@ export async function* prettify(input) {
           buffer = "";
         }
         const [key, ...value] = actualLine.split("=");
+        const prettyValue =
+          value[0].trimLeft()[0] === "{"
+            ? printPrettySingleLineTable(
+                TOML.parse(actualLine.replace(key, "table")).table
+              )
+            : value.join("=").trim();
+
         yield indent(indentationLevel) +
           renderKey(key) +
           " = " +
-          value.join("=").trim() +
+          prettyValue +
           (comment || "");
         break;
     }
