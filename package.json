@@ -27,5 +27,8 @@
   "type": "module",
   "dependencies": {
     "@aduh95/toml": "^0.2.1"
+  },
+  "engines": {
+    "node": "^12.17.0 || >=13.2.0"
   }
 }
