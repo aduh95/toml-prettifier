@@ -1,0 +1,24 @@
+{
+  "name": "toml-prettifier",
+  "version": "1.0.0",
+  "description": "Opinionated TOML code formatter",
+  "main": "index.js",
+  "scripts": {
+    "test": "test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aduh95/toml-prettifier.git"
+  },
+  "keywords": [
+    "toml",
+    "prettify",
+    "formatter"
+  ],
+  "author": "Antoine du Hamel <duhamelantoine1995@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/aduh95/toml-prettifier/issues"
+  },
+  "homepage": "https://github.com/aduh95/toml-prettifier#readme"
+}
