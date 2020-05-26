@@ -148,12 +148,12 @@ export default async function* prettify(input) {
           for (const word of words) {
             if (word.length === 0) continue;
             if (
-              buffer.length + word.length + 2 <=
+              buffer.length + word.length + 3 <=
               LINE_LENGTH_LIMIT - indentation.length
             ) {
               buffer += " " + word;
             } else {
-              yield indentation + buffer + "\\";
+              yield indentation + buffer + " \\";
               buffer = word;
             }
           }
@@ -192,7 +192,7 @@ export default async function* prettify(input) {
           buffer = fullLine.match(basicStringOpening)[1] + " ";
           yield prettyPrintKeyAssignment(
             indentationLevel,
-            fullLine.substring(0, fullLine.length - buffer.length + 1)
+            fullLine.substring(0, fullLine.length - buffer.length + 1) + "\\"
           );
         } else if (
           literalStringOpening.test(usefulTOML) &&
