@@ -30,8 +30,30 @@ const printPrettyComment = (comment) => {
   return ` ${comment.substring(0, i)} ${comment.substring(i).trim()}`;
 };
 
-const printPrettySingleLineTable = (table) =>
-  `{ ${TOML.stringify(table).trim().split("\n").join(", ")} }`;
+const stringifyNestedTables = (object, key, replacers) => {
+  const v = object[key];
+  if (Array.isArray(v)) {
+    v.map((_, i) => stringifyNestedTables(object[key], i, replacers));
+  } else if ("object" === typeof v) {
+    const id = replacers.push(printPrettyInlineTable(v, replacers, true));
+    object[key] = "__object_to_replace__" + id;
+  }
+};
+const printPrettyInlineTable = (table, replacers = [], skipReplace = false) => {
+  for (const key of Object.keys(table)) {
+    stringifyNestedTables(table, key, replacers);
+  }
+
+  let result = `{ ${TOML.stringify(table).trim().split("\n").join(", ")} }`;
+
+  if (!skipReplace) {
+    for (let i = replacers.length; i; i--) {
+      result = result.replace(`"__object_to_replace__${i}"`, replacers[i - 1]);
+    }
+  }
+
+  return result;
+};
 
 function* printPrettyArray(buffer, indentationLevel) {
   const key = buffer.substring(0, buffer.indexOf("="));
@@ -40,7 +62,7 @@ function* printPrettyArray(buffer, indentationLevel) {
       ? JSON.stringify(val)
       : Array.isArray(val)
       ? `[${val.join(", ")}]`
-      : printPrettySingleLineTable(val);
+      : printPrettyInlineTable(val);
   });
   const keyLine = indent(indentationLevel) + key.trim() + " = [";
   const oneLine = keyLine + values.join(", ") + "]";
@@ -150,7 +172,7 @@ export async function* prettify(input) {
 
         const prettyValue =
           value[0].trimLeft()[0] === "{"
-            ? printPrettySingleLineTable(
+            ? printPrettyInlineTable(
                 TOML.parse(actualLine.replace(key, "table")).table
               )
             : value.join("=").trim();
