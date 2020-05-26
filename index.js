@@ -56,44 +56,56 @@ const printPrettyInlineTable = (table, replacers = [], skipReplace = false) => {
 };
 
 function* printPrettyArray(buffer, indentationLevel) {
-  const key = buffer.substring(0, buffer.indexOf("="));
-  const values = TOML.parse(buffer.replace(key, "values")).values.map((val) => {
-    return "string" === typeof val || "number" === typeof val
-      ? JSON.stringify(val)
-      : Array.isArray(val)
-      ? `[${val.join(", ")}]`
-      : printPrettyInlineTable(val);
-  });
-  const keyLine = indent(indentationLevel) + key.trim() + " = [";
-  const oneLine = keyLine + values.join(", ") + "]";
-  if (oneLine.length <= LINE_LENGTH_LIMIT) {
-    yield oneLine;
-  } else {
-    yield keyLine;
-    for (const value of values) {
-      yield indent(indentationLevel + 1) + value + ",";
+  try {
+    const key = buffer.substring(0, buffer.indexOf("="));
+    const values = TOML.parse(buffer.replace(key, "values")).values.map(
+      (val) => {
+        return "string" === typeof val || "number" === typeof val
+          ? JSON.stringify(val)
+          : Array.isArray(val)
+          ? `[${val.join(", ")}]`
+          : printPrettyInlineTable(val);
+      }
+    );
+    const keyLine = indent(indentationLevel) + key.trim() + " = [";
+    const oneLine = keyLine + values.join(", ") + "]";
+    if (oneLine.length <= LINE_LENGTH_LIMIT) {
+      yield oneLine;
+    } else {
+      yield keyLine;
+      for (const value of values) {
+        yield indent(indentationLevel + 1) + value + ",";
+      }
+      yield indent(indentationLevel) + "]";
     }
-    yield indent(indentationLevel) + "]";
+  } catch (e) {
+    console.warn(e);
+    yield indent(indentationLevel) + buffer;
   }
 }
 
 function prettyPrintKeyAssignment(indentationLevel, actualLine, comment) {
-  const [key, ...value] = actualLine.split("=");
+  try {
+    const [key, ...value] = actualLine.split("=");
 
-  const prettyValue =
-    value[0].trimLeft()[0] === "{"
-      ? printPrettyInlineTable(
-          TOML.parse(actualLine.replace(key, "table")).table
-        )
-      : value.join("=").trim();
+    const prettyValue =
+      value[0].trimLeft()[0] === "{"
+        ? printPrettyInlineTable(
+            TOML.parse(actualLine.replace(key, "table")).table
+          )
+        : value.join("=").trim();
 
-  return (
-    indent(indentationLevel) +
-    renderKey(key) +
-    " = " +
-    prettyValue +
-    printPrettyComment(comment)
-  );
+    return (
+      indent(indentationLevel) +
+      renderKey(key) +
+      " = " +
+      prettyValue +
+      printPrettyComment(comment)
+    );
+  } catch (e) {
+    console.warn(e);
+    return indent(indentationLevel) + actualLine + comment;
+  }
 }
 
 /**
