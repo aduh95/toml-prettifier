@@ -10,8 +10,8 @@ const MULTILINE_LITERAL_STRING_MODE = Symbol("multiline literal string mode");
 const importantBits = /^\s*((?:"(?:\\"|[^"])+"|'[^']+'|[^#])*)\s*(#+.*)?$/;
 const arrayDeclaration = /^(?:"(?:\\"|[^"])+"|'[^']+'|[^="']+)=\s*\[/;
 
-const basicStringOpening = /=\s*"""(.*)$/;
-const literalStringOpening = /=\s*'''(.*)$/;
+const basicStringOpening = /^[^=]+=\s*"""(.*)$/;
+const literalStringOpening = /^[^=]+=\s*'''(.*)$/;
 const singlelineMultilineStringDeclaration = /=\s*""".*[^\\]"""$/;
 const singlelineMultilineLiteralStringDeclaration = /=\s*'''.*'''$/;
 
@@ -77,6 +77,25 @@ function* printPrettyArray(buffer, indentationLevel) {
   }
 }
 
+function prettyPrintKeyAssignment(indentationLevel, actualLine, comment) {
+  const [key, ...value] = actualLine.split("=");
+
+  const prettyValue =
+    value[0].trimLeft()[0] === "{"
+      ? printPrettyInlineTable(
+          TOML.parse(actualLine.replace(key, "table")).table
+        )
+      : value.join("=").trim();
+
+  return (
+    indent(indentationLevel) +
+    renderKey(key) +
+    " = " +
+    prettyValue +
+    printPrettyComment(comment)
+  );
+}
+
 /**
  * Prettifies TOML code.
  * @param {AsyncIterator<string>} input TOML lines
@@ -117,12 +136,14 @@ export default async function* prettify(input) {
         ) {
           mode = NORMAL_MODE;
           const words = buffer.slice(0, -4).split(/\\\s+|\s/);
-          buffer = words.shift();
+          do {
+            buffer = words.shift();
+          } while (buffer.length === 0); // Ignore empty words
           const indentation = indent(indentationLevel + 1);
           for (const word of words) {
             if (word.length === 0) continue;
             if (
-              buffer.length + word.length + 1 <=
+              buffer.length + word.length + 2 <=
               LINE_LENGTH_LIMIT - indentation.length
             ) {
               buffer += " " + word;
@@ -145,7 +166,6 @@ export default async function* prettify(input) {
         if (actualLine.startsWith("[")) {
           indentationLevel = actualLine.split(".").length;
           yield indent(indentationLevel - 1) + actualLine;
-          continue;
         } else if (arrayDeclaration.test(actualLine)) {
           if (comment)
             yield indent(indentationLevel) + printPrettyComment(comment).trim();
@@ -155,33 +175,25 @@ export default async function* prettify(input) {
             mode = MULTILINE_ARRAY_MODE;
             buffer = actualLine;
           }
-          continue;
         } else if (
           basicStringOpening.test(actualLine) &&
           !singlelineMultilineStringDeclaration.test(actualLine)
         ) {
           mode = MULTILINE_BASIC_STRING_MODE;
-          buffer = fullLine.match(basicStringOpening)[1];
+          buffer = fullLine.match(basicStringOpening)[1] + " ";
+          yield prettyPrintKeyAssignment(
+            indentationLevel,
+            fullLine.substring(0, fullLine.length - buffer.length + 1)
+          );
         } else if (
           literalStringOpening.test(actualLine) &&
           !singlelineMultilineLiteralStringDeclaration.test(actualLine)
         ) {
           mode = MULTILINE_LITERAL_STRING_MODE;
+          yield prettyPrintKeyAssignment(indentationLevel, fullLine);
+        } else {
+          yield prettyPrintKeyAssignment(indentationLevel, actualLine, comment);
         }
-        const [key, ...value] = actualLine.split("=");
-
-        const prettyValue =
-          value[0].trimLeft()[0] === "{"
-            ? printPrettyInlineTable(
-                TOML.parse(actualLine.replace(key, "table")).table
-              )
-            : value.join("=").trim();
-
-        yield indent(indentationLevel) +
-          renderKey(key) +
-          " = " +
-          prettyValue +
-          printPrettyComment(comment);
         break;
     }
   }
