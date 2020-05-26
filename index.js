@@ -120,21 +120,14 @@ export default async function* prettify(input) {
   let buffer;
 
   for await (const fullLine of input) {
-    const [, actualLine, comment] = fullLine.match(importantBits) || [];
-    if (!actualLine) {
-      if (comment)
-        yield indent(indentationLevel) + printPrettyComment(comment).trim();
-      else yield "";
-
-      continue; // skip parsing empty lines
-    }
+    const [, usefulTOML, comment] = fullLine.match(importantBits) || [];
 
     switch (mode) {
       case MULTILINE_ARRAY_MODE:
-        buffer += actualLine;
+        buffer += usefulTOML;
         if (comment)
           yield indent(indentationLevel) + printPrettyComment(comment).trim();
-        if (actualLine.endsWith("]")) {
+        if (usefulTOML.endsWith("]")) {
           mode = NORMAL_MODE;
           yield* printPrettyArray(buffer, indentationLevel);
         }
@@ -175,21 +168,25 @@ export default async function* prettify(input) {
         break;
 
       case NORMAL_MODE:
-        if (actualLine.startsWith("[")) {
-          indentationLevel = actualLine.split(".").length;
-          yield indent(indentationLevel - 1) + actualLine;
-        } else if (arrayDeclaration.test(actualLine)) {
+        if (!usefulTOML) {
           if (comment)
             yield indent(indentationLevel) + printPrettyComment(comment).trim();
-          if (actualLine.endsWith("]")) {
-            yield* printPrettyArray(actualLine, indentationLevel);
+          else yield "";
+        } else if (usefulTOML.startsWith("[")) {
+          indentationLevel = usefulTOML.split(".").length;
+          yield indent(indentationLevel - 1) + usefulTOML;
+        } else if (arrayDeclaration.test(usefulTOML)) {
+          if (comment)
+            yield indent(indentationLevel) + printPrettyComment(comment).trim();
+          if (usefulTOML.endsWith("]")) {
+            yield* printPrettyArray(usefulTOML, indentationLevel);
           } else {
             mode = MULTILINE_ARRAY_MODE;
-            buffer = actualLine;
+            buffer = usefulTOML;
           }
         } else if (
-          basicStringOpening.test(actualLine) &&
-          !singlelineMultilineStringDeclaration.test(actualLine)
+          basicStringOpening.test(usefulTOML) &&
+          !singlelineMultilineStringDeclaration.test(usefulTOML)
         ) {
           mode = MULTILINE_BASIC_STRING_MODE;
           buffer = fullLine.match(basicStringOpening)[1] + " ";
@@ -198,13 +195,13 @@ export default async function* prettify(input) {
             fullLine.substring(0, fullLine.length - buffer.length + 1)
           );
         } else if (
-          literalStringOpening.test(actualLine) &&
-          !singlelineMultilineLiteralStringDeclaration.test(actualLine)
+          literalStringOpening.test(usefulTOML) &&
+          !singlelineMultilineLiteralStringDeclaration.test(usefulTOML)
         ) {
           mode = MULTILINE_LITERAL_STRING_MODE;
           yield prettyPrintKeyAssignment(indentationLevel, fullLine);
         } else {
-          yield prettyPrintKeyAssignment(indentationLevel, actualLine, comment);
+          yield prettyPrintKeyAssignment(indentationLevel, usefulTOML, comment);
         }
         break;
     }
