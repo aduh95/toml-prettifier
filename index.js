@@ -98,8 +98,8 @@ function prettyPrintKeyAssignment(indentationLevel, actualLine, comment) {
 
 /**
  * Prettifies TOML code.
- * @param {AsyncIterator<string>} input TOML lines
- * @returns {AsyncIterator<string>} Formatted TOML lines
+ * @param {AsyncIterable<string>} input TOML lines
+ * @returns {AsyncGenerator<string>} Formatted TOML lines
  */
 export default async function* prettify(input) {
   let mode = NORMAL_MODE;

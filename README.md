@@ -40,3 +40,20 @@ export async function prettifyTOMLFile(inputFilePath) {
   await fs.rename(tmpFile, inputFilePath);
 }
 ```
+
+### Rules
+
+There are no available configuration for the formatting.
+
+- Keys: unquote the keys when possible.
+- Multiline basic strings: All spaces will be ignored, the string will be kept
+  under 80 char per line. If you need spacing, use literal strings.
+- Multiline literal strings: No transformations are made.
+- Comments:
+  - They respect indentation.
+  - One or several `#`s represent the start of a comment, followed by one space
+    unless the comment is empty.
+- Arrays: If an array can fit on one line, it will be reformated to one line,
+  otherwise each element will be on a new line, with a trailing comma.
+- Inline tables: keys are alphabetically ordered.
+- Empty lines: conserved, but any space is removed.
