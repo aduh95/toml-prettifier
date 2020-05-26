@@ -1,0 +1,77 @@
+"quoted key" = "should stay quoted"
+unnecessary_quotes = "should not stay quoted"
+"necessary.quotes" = "should stay quoted"
+
+single_line.basic_string = """one line stays as is""" # comment
+single_line.literal_string = '''one line stays as is''' #comment
+
+multi_line.literal_string='''  #This is not a comment
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
+ cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+'''
+multi_line.basic_string = """
+  #This is not a comment Lorem ipsum dolor sit amet, consectetur adipiscing\
+  elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut\
+  enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut\
+  aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in\
+  voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint\
+  occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit\
+  anim id est laborum.\
+"""
+multi_line.basic_string_no_comment = """
+  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod\
+  tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,\
+  quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo\
+  consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse\
+  cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non\
+  proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\
+"""
+
+multi_line.literal_string_abrubt_end = '''
+test\'''
+multi_line.basic_string_abrubt_end = """
+  test\""" still inside the string\
+"""
+
+
+# Empty lines are OK
+
+
+
+
+[indent]
+  single_line.table = { nested = { nested = { nested = "table" } } }
+  single_line.array = [{ nested = [{ nested = { nested = ["table", 7] } }] }]
+  multi_line.array = [
+    "long",
+    "long",
+    "long",
+    "long",
+    "long",
+    "long",
+    "long",
+    "long",
+    "long",
+    "array",
+  ]
+
+  # Comment can be ugly too!
+
+  ###
+  ### But they could be pretty...
+  ###
+
+  is_this = 'still indented?'
+
+[level0]
+  key = "value"
+  [level0.level1]
+    key = "value"
+    [level0.level1.level2]
+      key = "value"
+    [level0.level1.level2bis]
+      key = "value"
+  [level0.level1bis]
+    key = "value"
+[level0bis]
+  key = "value"
