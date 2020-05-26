@@ -82,7 +82,7 @@ function* printPrettyArray(buffer, indentationLevel) {
  * @param {AsyncIterator<string>} input TOML lines
  * @returns {AsyncIterator<string>} Formatted TOML lines
  */
-export async function* prettify(input) {
+export default async function* prettify(input) {
   let mode = NORMAL_MODE;
   let indentationLevel = 0;
 

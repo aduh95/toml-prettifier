@@ -1,10 +1,13 @@
 {
-  "name": "toml-prettifier",
+  "name": "@aduh95/toml-prettifier",
   "version": "1.0.0",
   "description": "Opinionated TOML code formatter",
   "main": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
   "scripts": {
-    "test": "test.js"
+    "test": "node --experimental-top-level-await test.js"
   },
   "repository": {
     "type": "git",
@@ -20,5 +23,9 @@
   "bugs": {
     "url": "https://github.com/aduh95/toml-prettifier/issues"
   },
-  "homepage": "https://github.com/aduh95/toml-prettifier#readme"
+  "homepage": "https://github.com/aduh95/toml-prettifier#readme",
+  "type": "module",
+  "dependencies": {
+    "@aduh95/toml": "^0.2.1"
+  }
 }
