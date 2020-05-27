@@ -7,13 +7,14 @@ const MULTILINE_ARRAY_MODE = Symbol("array mode");
 const MULTILINE_BASIC_STRING_MODE = Symbol("multiline basic string mode");
 const MULTILINE_LITERAL_STRING_MODE = Symbol("multiline literal string mode");
 
-const importantBits = /^\s*((?:"(?:\\"|[^"])+"|'[^']+'|[^#])*)\s*(#+.*)?$/;
-const arrayDeclaration = /^(?:"(?:\\"|[^"])+"|'[^']+'|[^="']+)=\s*\[/;
+const importantBits = /^\s*((?:"(?:\\"|[^"])*"|'[^']*'|[^#])*)(#+.*)?$/;
 
-const basicStringOpening = /^[^=]+=\s*"""(.*)$/;
-const literalStringOpening = /^[^=]+=\s*'''(.*)$/;
-const singlelineMultilineStringDeclaration = /=\s*""".*[^\\]"""$/;
-const singlelineMultilineLiteralStringDeclaration = /=\s*'''.*'''$/;
+const arrayOpening = /^(?:"(?:\\"|[^"])*"|'[^']*'|[^="']+)=\s*\[/;
+const basicStringOpening = /^(?:"(?:\\"|[^"])*"|'[^']*'|[^="']+)=\s*"""(.*)$/;
+const literalStringOpening = /^(?:"(?:\\"|[^"])*"|'[^']*'|[^="']+)=\s*'''(.*)$/;
+
+const singlelineMultilineStringDeclaration = /=\s*""".*[^\\]"""\s*$/;
+const singlelineMultilineLiteralStringDeclaration = /=\s*'''.*'''\s*$/;
 
 const indent = (indentationLevel) => " ".repeat(indentationLevel * 2);
 
@@ -140,13 +141,13 @@ export default async function* prettify(input) {
           fullLine.charAt(fullLine.length - 4) !== "\\"
         ) {
           mode = NORMAL_MODE;
-          const words = buffer.slice(0, -4).split(/\\\s+|\s/);
-          do {
-            buffer = words.shift();
-          } while (buffer.length === 0); // Ignore empty words
+          const words = buffer
+            .slice(0, -4)
+            .split(/(?<!\\)\\\s+|\s/)
+            .filter((word) => word.length !== 0); // Ignore empty words
+          buffer = words.shift();
           const indentation = indent(indentationLevel + 1);
           for (const word of words) {
-            if (word.length === 0) continue;
             if (
               buffer.length + word.length + 3 <=
               LINE_LENGTH_LIMIT - indentation.length
@@ -175,7 +176,7 @@ export default async function* prettify(input) {
         } else if (usefulTOML.startsWith("[")) {
           indentationLevel = usefulTOML.split(".").length;
           yield indent(indentationLevel - 1) + usefulTOML;
-        } else if (arrayDeclaration.test(usefulTOML)) {
+        } else if (arrayOpening.test(usefulTOML)) {
           if (comment)
             yield indent(indentationLevel) + printPrettyComment(comment).trim();
           if (usefulTOML.endsWith("]")) {
