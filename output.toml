@@ -1,9 +1,23 @@
 "quoted key" = "should stay quoted"
 unnecessary_quotes = "should not stay quoted"
+unnecessary-quotes = "should not stay quoted"
 "necessary.quotes" = "should stay quoted"
+'necessary=quotes' = "should stay quoted"
+
+123456789 = "should not stay quoted"
+unnecessary.quotes = "should not stay quoted"
+
+site."google.com" = true
+"127.0.0.1" = "value"
+"character encoding" = "value"
+"ʎǝʞ" = "value"
+key2 = "value"
+'quoted "value"' = "value"
+"" = "blank"
 
 single_line.basic_string = """one line stays as is""" # comment
 single_line.literal_string = '''one line stays as is''' # comment
+single_line.literal_string_with_true_ending = '''one line stays as is\'''
 
 multi_line.literal_string = '''  #This is not a comment
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
@@ -33,6 +47,15 @@ multi_line.basic_string_starts_with_backslash = """\
   consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse \
   cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat \
   non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\
+"""
+multi_line.basic_string_starts_with_fake_ending = """\
+  this is not a single line string\""" Lorem ipsum dolor sit amet, consectetur \
+  adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna \
+  aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris \
+  nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in \
+  reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla \
+  pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui \
+  officia deserunt mollit anim id est laborum.\
 """
 
 multi_line.literal_string_abrubt_end = '''
