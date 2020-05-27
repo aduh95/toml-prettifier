@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import assert from "assert";
-import { createReadStream, readFileSync } from "fs";
+import { constants, createReadStream, openSync, readSync, closeSync } from "fs";
 import { createInterface as readLines } from "readline";
 
 import TOMLPrettifier from "@aduh95/toml-prettifier";
@@ -15,15 +15,21 @@ const input = readLines({
   crlfDelay: Infinity,
 });
 
-const output = readFileSync(outputFileURL);
-let position = 0;
+const output = openSync(outputFileURL, constants.R_OK);
 
 // Pass the input to TOMLPrettifier.
 for await (const line of TOMLPrettifier(input)) {
+  const expected = Buffer.allocUnsafe(line.length);
+  readSync(output, expected, { length: line.length });
   // Compare with expected output.
-  assert.strictEqual(
-    line,
-    output.slice(position, (position += line.length)).toString("utf8")
+  assert.strictEqual(line, expected.toString("utf8"));
+
+  // skip line return char(s)
+  for (
+    const buf = Buffer.allocUnsafe(1);
+    buf[0] !== 10; // 10 is ASCII for \n
+    readSync(output, buf, { length: 1 })
   );
-  position++; // skip line return char
 }
+
+closeSync(output);
