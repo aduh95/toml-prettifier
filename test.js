@@ -15,21 +15,22 @@ const input = readLines({
   crlfDelay: Infinity,
 });
 
-const output = openSync(outputFileURL, constants.R_OK);
+// Read the output file line by line.
+const output = readLineByLine(
+  readLines({
+    input: createReadStream(outputFileURL),
+    crlfDelay: Infinity,
+  })
+);
+
+async function* readLineByLine(stream) {
+  for await (const line of stream) yield line;
+}
 
 // Pass the input to TOMLPrettifier.
 for await (const line of TOMLPrettifier(input)) {
-  const expected = Buffer.allocUnsafe(line.length);
-  readSync(output, expected, { length: line.length });
+  const { value: expected } = await output.next();
+
   // Compare with expected output.
-  assert.strictEqual(line, expected.toString("utf8"));
-
-  // skip line return char(s)
-  for (
-    const buf = Buffer.allocUnsafe(1);
-    buf[0] !== 10; // 10 is ASCII for \n
-    readSync(output, buf, { length: 1 })
-  );
+  assert.strictEqual(line, expected);
 }
-
-closeSync(output);
