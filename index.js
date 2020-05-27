@@ -8,21 +8,16 @@ const MULTILINE_BASIC_STRING_MODE = Symbol("multiline basic string mode");
 const MULTILINE_LITERAL_STRING_MODE = Symbol("multiline literal string mode");
 
 const importantBits = /^\s*((?:"(?:\\"|[^"])*"|'[^']*'|[^#])*)(#+.*)?$/;
+const keyValueDeclaration = /^((?:"(?:\\"|[^"])*"|'[^']*'|[^="']+)+)=\s*(.+)$/;
 
-const arrayOpening = /^(?:"(?:\\"|[^"])*"|'[^']*'|[^="']+)=\s*\[/;
-const basicStringOpening = /^(?:"(?:\\"|[^"])*"|'[^']*'|[^="']+)=\s*"""(.*)$/;
-const literalStringOpening = /^(?:"(?:\\"|[^"])*"|'[^']*'|[^="']+)=\s*'''(.*)$/;
-
-const singlelineMultilineStringDeclaration = /=\s*""".*[^\\]"""\s*$/;
-const singlelineMultilineLiteralStringDeclaration = /=\s*'''.*'''\s*$/;
+const singlelineMultilineStringDeclaration = /^""".*[^\\]"""\s*$/;
+const singlelineMultilineLiteralStringDeclaration = /^'''.*'''\s*$/;
 
 const indent = (indentationLevel) => " ".repeat(indentationLevel * 2);
 
-const unquoteKey = /^["'](\w+)["']\s*$/;
-const renderKey = (key) => {
-  const [, actualKey] = key.match(unquoteKey) || [, key.trim()];
-  return actualKey;
-};
+const quotedToBare = /(?:(?<=\.)|^)\s*["']([A-Za-z0-9_-]+)["']/g;
+const renderKey = (key) =>
+  key.replace(quotedToBare, (_, unquotedKey) => unquotedKey).trim();
 
 const printPrettyComment = (comment) => {
   if (!comment) return "";
@@ -56,18 +51,15 @@ const printPrettyInlineTable = (table, replacers = [], skipReplace = false) => {
   return result;
 };
 
-function* printPrettyArray(buffer, indentationLevel) {
+function* printPrettyArray(key, value, indentationLevel) {
   try {
-    const key = buffer.substring(0, buffer.indexOf("="));
-    const values = TOML.parse(buffer.replace(key, "values")).values.map(
-      (val) => {
-        return "string" === typeof val || "number" === typeof val
-          ? JSON.stringify(val)
-          : Array.isArray(val)
-          ? `[${val.join(", ")}]`
-          : printPrettyInlineTable(val);
-      }
-    );
+    const values = TOML.parse("_key=" + value)._key.map((val) => {
+      return "string" === typeof val || "number" === typeof val
+        ? JSON.stringify(val)
+        : Array.isArray(val)
+        ? `[${val.join(", ")}]`
+        : printPrettyInlineTable(val);
+    });
     const keyLine = indent(indentationLevel) + key.trim() + " = [";
     const oneLine = keyLine + values.join(", ") + "]";
     if (oneLine.length <= LINE_LENGTH_LIMIT) {
@@ -85,16 +77,11 @@ function* printPrettyArray(buffer, indentationLevel) {
   }
 }
 
-function prettyPrintKeyAssignment(indentationLevel, actualLine, comment) {
+function prettyPrintKeyAssignment(indentationLevel, key, value, comment) {
   try {
-    const [key, ...value] = actualLine.split("=");
-
-    const prettyValue =
-      value[0].trimLeft()[0] === "{"
-        ? printPrettyInlineTable(
-            TOML.parse(actualLine.replace(key, "table")).table
-          )
-        : value.join("=").trim();
+    const prettyValue = value.startsWith("{")
+      ? printPrettyInlineTable(TOML.parse("_key=" + value)._key)
+      : value.trimRight();
 
     return (
       indent(indentationLevel) +
@@ -105,7 +92,7 @@ function prettyPrintKeyAssignment(indentationLevel, actualLine, comment) {
     );
   } catch (e) {
     console.warn(e);
-    return indent(indentationLevel) + actualLine + comment;
+    return indent(indentationLevel) + key + " = " + value + comment;
   }
 }
 
@@ -130,7 +117,8 @@ export default async function* prettify(input) {
           yield indent(indentationLevel) + printPrettyComment(comment).trim();
         if (usefulTOML.endsWith("]")) {
           mode = NORMAL_MODE;
-          yield* printPrettyArray(buffer, indentationLevel);
+          const [, key, value] = buffer.match(keyValueDeclaration);
+          yield* printPrettyArray(key, value, indentationLevel);
         }
         break;
 
@@ -169,6 +157,10 @@ export default async function* prettify(input) {
         break;
 
       case NORMAL_MODE:
+        const [, key, value] = usefulTOML
+          ? usefulTOML.match(keyValueDeclaration) || []
+          : [];
+
         if (!usefulTOML) {
           if (comment)
             yield indent(indentationLevel) + printPrettyComment(comment).trim();
@@ -176,33 +168,36 @@ export default async function* prettify(input) {
         } else if (usefulTOML.startsWith("[")) {
           indentationLevel = usefulTOML.split(".").length;
           yield indent(indentationLevel - 1) + usefulTOML;
-        } else if (arrayOpening.test(usefulTOML)) {
+        } else if (value.startsWith("[")) {
           if (comment)
             yield indent(indentationLevel) + printPrettyComment(comment).trim();
-          if (usefulTOML.endsWith("]")) {
-            yield* printPrettyArray(usefulTOML, indentationLevel);
+          if (value.trimRight().endsWith("]")) {
+            // single-line array declaration
+            yield* printPrettyArray(key, value, indentationLevel);
           } else {
             mode = MULTILINE_ARRAY_MODE;
             buffer = usefulTOML;
           }
         } else if (
-          basicStringOpening.test(usefulTOML) &&
-          !singlelineMultilineStringDeclaration.test(usefulTOML)
+          value.startsWith('"""') &&
+          !singlelineMultilineStringDeclaration.test(value)
         ) {
           mode = MULTILINE_BASIC_STRING_MODE;
-          buffer = fullLine.match(basicStringOpening)[1] + " ";
-          yield prettyPrintKeyAssignment(
-            indentationLevel,
-            fullLine.substring(0, fullLine.length - buffer.length + 1) + "\\"
-          );
+          buffer = value.substring(3) + (comment || "") + " ";
+          yield prettyPrintKeyAssignment(indentationLevel, key, '"""\\');
         } else if (
-          literalStringOpening.test(usefulTOML) &&
-          !singlelineMultilineLiteralStringDeclaration.test(usefulTOML)
+          value.startsWith("'''") &&
+          !singlelineMultilineLiteralStringDeclaration.test(value)
         ) {
           mode = MULTILINE_LITERAL_STRING_MODE;
-          yield prettyPrintKeyAssignment(indentationLevel, fullLine);
+          yield prettyPrintKeyAssignment(
+            indentationLevel,
+            key,
+            value + (comment || "")
+            // comment is actually part of the literal string
+          );
         } else {
-          yield prettyPrintKeyAssignment(indentationLevel, usefulTOML, comment);
+          yield prettyPrintKeyAssignment(indentationLevel, key, value, comment);
         }
         break;
     }
