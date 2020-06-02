@@ -8,7 +8,9 @@
     ".": "./index.js"
   },
   "scripts": {
-    "test": "node --experimental-top-level-await test.js"
+    "test:node": "node --experimental-top-level-await test.js",
+    "test:deno": "deno test --allow-read --allow-net --unstable --importmap ./importmap.json deno-test.ts",
+    "test": "npm run test:node && npm run test:deno"
   },
   "repository": {
     "type": "git",
