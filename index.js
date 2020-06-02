@@ -73,7 +73,7 @@ function* printPrettyArray(key, value, indentationLevel) {
     }
   } catch (e) {
     console.warn(e);
-    yield indent(indentationLevel) + buffer;
+    yield indent(indentationLevel) + key + " = " + value;
   }
 }
 
