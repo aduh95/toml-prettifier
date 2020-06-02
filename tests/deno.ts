@@ -13,7 +13,7 @@ Deno.test({
     const [input, output] = (
       await Promise.all(
         ["input", "output"]
-          .map((name: string) => `${PROJECT_ROOT}/${name}.toml`)
+          .map((name: string) => `${PROJECT_ROOT}/tests/${name}.toml`)
           .map(Deno.readTextFile)
       )
     ).map((str: string) => str.split(/\r|\n/g));

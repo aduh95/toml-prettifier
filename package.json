@@ -8,8 +8,8 @@
     ".": "./index.js"
   },
   "scripts": {
-    "test:node": "node --experimental-top-level-await test.js",
-    "test:deno": "deno test --allow-read --allow-net --unstable --importmap ./importmap.json deno-test.ts",
+    "test:node": "node --experimental-top-level-await tests/node.js",
+    "test:deno": "deno test --allow-read --allow-net --unstable --importmap ./tests/importmap.json tests/deno.ts",
     "test": "npm run test:node && npm run test:deno"
   },
   "repository": {
