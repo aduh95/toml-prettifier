@@ -1,6 +1,6 @@
 # TOML Prettifier
 
-Opinionated TOML code formatter.
+Opinionated TOML code formatter written in JavaScript.
 
 ### Usage
 
@@ -39,6 +39,19 @@ export async function prettifyTOMLFile(inputFilePath) {
   // Replace the input file by the temp file.
   await fs.rename(tmpFile, inputFilePath);
 }
+```
+
+#### Web and Deno usage
+
+The API is the same, although you must init the `@aduh95/toml` package manually
+before using it. This uses a WASM module that must be initiate asynchronously
+and is used to prettify arrays and inline tables.
+
+```js
+import TOMLPrettifier from "@aduh95/toml-prettifier";
+import initTOMLWasm from "@aduh95/toml";
+
+await initTOMLWasm();
 ```
 
 ### Rules
