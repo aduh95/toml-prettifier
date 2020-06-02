@@ -27,7 +27,7 @@
   "homepage": "https://github.com/aduh95/toml-prettifier#readme",
   "type": "module",
   "dependencies": {
-    "@aduh95/toml": "^0.2.1"
+    "@aduh95/toml": "^0.3.2"
   },
   "engines": {
     "node": "^12.17.0 || >=13.2.0"

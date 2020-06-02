@@ -1,4 +1,4 @@
-import TOML from "@aduh95/toml";
+import * as TOML from "@aduh95/toml";
 
 const LINE_LENGTH_LIMIT = 80;
 
