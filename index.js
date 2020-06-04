@@ -168,6 +168,9 @@ export default async function* prettify(input) {
         } else if (usefulTOML.startsWith("[")) {
           indentationLevel = usefulTOML.split(".").length;
           yield indent(indentationLevel - 1) + usefulTOML;
+        } else if (!value || !key) {
+          // If TOML syntax is not recognized, give up for the current line
+          yield fullLine;
         } else if (value.startsWith("[")) {
           if (comment)
             yield indent(indentationLevel) + printPrettyComment(comment).trim();
