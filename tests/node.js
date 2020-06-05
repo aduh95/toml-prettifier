@@ -16,7 +16,7 @@ const input = readLines({
 });
 
 // Read the output file line by line.
-const output = readLineByLine(
+const expectedOutput = readLineByLine(
   readLines({
     input: createReadStream(outputFileURL),
     crlfDelay: Infinity,
@@ -27,10 +27,15 @@ async function* readLineByLine(stream) {
   for await (const line of stream) yield line;
 }
 
+let lineNb = 0;
 // Pass the input to TOMLPrettifier.
 for await (const line of TOMLPrettifier(input)) {
-  const { value: expected } = await output.next();
+  const { value: expected } = await expectedOutput.next();
 
   // Compare with expected output.
-  assert.strictEqual(line, expected);
+  assert.strictEqual(
+    line,
+    expected,
+    `Doesn't match ${outputFileURL}:${++lineNb}`
+  );
 }
