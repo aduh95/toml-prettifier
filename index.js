@@ -99,28 +99,44 @@ function prettyPrintKeyAssignment(indentationLevel, key, value, comment) {
 function* prettyPrintMultilineBasicString(
   indentationLevel,
   fullString,
-  comment
+  comment,
+  previousWork
 ) {
-  const indentation = indent(indentationLevel + 1);
-  let i = 0;
-  // Split ignoring empty strings.
-  const words = fullString.split(/(?<!\\)\\\s|\s/).filter(Boolean);
-
-  while (i < words.length) {
-    const buffer = [];
-    for (
-      let word = words[i], lineLength = word.length + 1;
-      i < words.length && lineLength < LINE_LENGTH_LIMIT - indentation.length;
-      lineLength += (word = words[++i] || "").length + 1
-    ) {
-      buffer.push(word);
-    }
-    yield indentation +
-      buffer.join(" ") +
-      " ".repeat(i !== words.length) +
-      "\\";
-  }
+  const lastLine = yield* prettyPrintMultilineBasicStringLines(
+    indentationLevel + 1,
+    fullString,
+    previousWork
+  );
+  yield indent(indentationLevel + 1) + lastLine.join(" ") + "\\";
   yield indent(indentationLevel) + '"""' + printPrettyComment(comment);
+}
+function* prettyPrintMultilineBasicStringLines(
+  indentationLevel,
+  str,
+  previousWork = []
+) {
+  const indentation = indent(indentationLevel);
+  const lineLengthLimit = LINE_LENGTH_LIMIT - indentation.length;
+  // Split ignoring empty strings.
+  const words = previousWork.concat(
+    str.split(/(?<!\\)\\\s|\s/).filter(Boolean)
+  );
+
+  let buffer = undefined;
+  let currentLineLength = 2; // counting the trailing space+backslash
+  for (const word of words) {
+    if (buffer === undefined) {
+      buffer = [word]; // in case the first word is really big
+    } else if (currentLineLength + word.length <= lineLengthLimit) {
+      buffer.push(word);
+    } else {
+      yield indentation + buffer.join(" ") + " \\";
+      currentLineLength = 2; // counting the trailing space+backslash
+      buffer = [word];
+    }
+    currentLineLength += word.length + 1;
+  }
+  return buffer;
 }
 
 /**
@@ -159,11 +175,16 @@ export default async function* prettify(input) {
             mode = NORMAL_MODE;
             yield* prettyPrintMultilineBasicString(
               indentationLevel,
-              buffer + fullLine.substring(0, EOS),
-              fullLine.substring(EOS + 3)
+              fullLine.substring(0, EOS),
+              fullLine.substring(EOS + 3),
+              buffer
             );
           } else {
-            buffer += fullLine + " ";
+            buffer = yield* prettyPrintMultilineBasicStringLines(
+              indentationLevel + 1,
+              fullLine,
+              buffer
+            );
           }
         }
         break;
@@ -215,8 +236,11 @@ export default async function* prettify(input) {
               comment
             );
           } else {
-            buffer = value.substring(3) + (comment || "") + " ";
             mode = MULTILINE_BASIC_STRING_MODE;
+            buffer = yield* prettyPrintMultilineBasicStringLines(
+              indentationLevel + 1,
+              value.substring(3) + (comment || "")
+            );
           }
         } else if (
           value.startsWith("'''") &&

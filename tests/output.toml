@@ -76,6 +76,11 @@ multi_line.basic_string_with_actual_comment = """\
   occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit \
   anim id est laborum.\
 """ # This is a comment
+multi_line.basic_string_with_word_longer_than_wrap_column = """\
+  qwertyuioplkjhgfdsazxcvbnmqwertyuioplkjhgfdsazxcvbnmqwertyuytrdfghgfvbdthjyfkjhrgesdgrabstvdfxhbxdsbfsbfdntbtsrvxdffxbdht \
+  sg sg asbareb \
+  sfbdhtgfDAfzghjhgsahstjyrthrgfscsvrbaSesrhklbfjzhvvjncdjfdbvhnjdfhbghvjnkdvkbhnvmkddjfnbhvbvdjnfhjbvdnjf\
+"""
 
 multi_line.literal_string_abrubt_end = '''
 test\'''
