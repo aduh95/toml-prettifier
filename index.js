@@ -96,6 +96,33 @@ function prettyPrintKeyAssignment(indentationLevel, key, value, comment) {
   }
 }
 
+function* prettyPrintMultilineBasicString(
+  indentationLevel,
+  fullString,
+  comment
+) {
+  const indentation = indent(indentationLevel + 1);
+  let i = 0;
+  // Split ignoring empty strings.
+  const words = fullString.split(/(?<!\\)\\\s|\s/).filter(Boolean);
+
+  while (i < words.length) {
+    const buffer = [];
+    for (
+      let word = words[i], lineLength = word.length + 1;
+      i < words.length && lineLength < LINE_LENGTH_LIMIT - indentation.length;
+      lineLength += (word = words[++i] || "").length + 1
+    ) {
+      buffer.push(word);
+    }
+    yield indentation +
+      buffer.join(" ") +
+      " ".repeat(i !== words.length) +
+      "\\";
+  }
+  yield indent(indentationLevel) + '"""' + printPrettyComment(comment);
+}
+
 /**
  * Prettifies TOML code.
  * @param {AsyncIterable<string>} input TOML lines
@@ -123,37 +150,35 @@ export default async function* prettify(input) {
         break;
 
       case MULTILINE_BASIC_STRING_MODE:
-        buffer += fullLine + " ";
-        if (
-          fullLine.endsWith('"""') &&
-          fullLine.charAt(fullLine.length - 4) !== "\\"
-        ) {
-          mode = NORMAL_MODE;
-          const words = buffer
-            .slice(0, -4)
-            .split(/(?<!\\)\\\s+|\s/)
-            .filter((word) => word.length !== 0); // Ignore empty words
-          buffer = words.shift();
-          const indentation = indent(indentationLevel + 1);
-          for (const word of words) {
-            if (
-              buffer.length + word.length + 3 <=
-              LINE_LENGTH_LIMIT - indentation.length
-            ) {
-              buffer += " " + word;
-            } else {
-              yield indentation + buffer + " \\";
-              buffer = word;
-            }
+        {
+          let EOS = fullLine.indexOf('"""');
+          while (EOS > 0 && fullLine.charAt(EOS - 1) === "\\") {
+            EOS = fullLine.indexOf('"""', EOS + 1);
           }
-          yield indentation + buffer + "\\";
-          yield indent(indentationLevel) + '"""';
+          if (EOS !== -1) {
+            mode = NORMAL_MODE;
+            yield* prettyPrintMultilineBasicString(
+              indentationLevel,
+              buffer + fullLine.substring(0, EOS),
+              fullLine.substring(EOS + 3)
+            );
+          } else {
+            buffer += fullLine + " ";
+          }
         }
         break;
 
       case MULTILINE_LITERAL_STRING_MODE:
-        if (fullLine.endsWith("'''")) mode = NORMAL_MODE;
-        yield fullLine;
+        {
+          const EOS = fullLine.indexOf("'''");
+          if (EOS !== -1) {
+            mode = NORMAL_MODE;
+            yield fullLine.substring(0, EOS + 3) +
+              printPrettyComment(fullLine.substring(EOS + 3));
+          } else {
+            yield fullLine;
+          }
+        }
         break;
 
       case NORMAL_MODE:
@@ -181,13 +206,18 @@ export default async function* prettify(input) {
             mode = MULTILINE_ARRAY_MODE;
             buffer = usefulTOML;
           }
-        } else if (
-          value.startsWith('"""') &&
-          !singlelineMultilineStringDeclaration.test(value)
-        ) {
-          mode = MULTILINE_BASIC_STRING_MODE;
-          buffer = value.substring(3) + (comment || "") + " ";
+        } else if (value.startsWith('"""')) {
           yield prettyPrintKeyAssignment(indentationLevel, key, '"""\\');
+          if (singlelineMultilineStringDeclaration.test(value)) {
+            yield* prettyPrintMultilineBasicString(
+              indentationLevel,
+              value.slice(3, -3),
+              comment
+            );
+          } else {
+            buffer = value.substring(3) + (comment || "") + " ";
+            mode = MULTILINE_BASIC_STRING_MODE;
+          }
         } else if (
           value.startsWith("'''") &&
           !singlelineMultilineLiteralStringDeclaration.test(value)

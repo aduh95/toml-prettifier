@@ -15,8 +15,10 @@ key2 = "value"
 'quoted "value"' = "value"
 "" = "blank"
 
-single_line.basic_string = """one line stays as is""" # comment
 single_line.literal_string = '''one line stays as is''' # comment
+single_line.basic_string = """\
+  one line is split in several lines\
+""" # comment
 single_line.literal_string_with_true_ending = '''one line stays as is\'''
 
 multi_line.literal_string = '''  #This is not a comment
@@ -57,6 +59,23 @@ multi_line.basic_string_starts_with_fake_ending = """\
   pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui \
   officia deserunt mollit anim id est laborum.\
 """
+multi_line.basic_string_with_true_ending = """\
+  one line is split in several lines\""" one line is split in several \
+  lines\""" one line is split in several lines\"\
+"""
+multi_line.literal_string_with_actual_comment = '''  #This is not a comment
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
+ cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+''' # This is a comment
+multi_line.basic_string_with_actual_comment = """\
+  #This is not a comment Lorem ipsum dolor sit amet, consectetur adipiscing \
+  elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut \
+  enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut \
+  aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in \
+  voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint \
+  occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit \
+  anim id est laborum.\
+""" # This is a comment
 
 multi_line.literal_string_abrubt_end = '''
 test\'''
@@ -64,6 +83,15 @@ multi_line.basic_string_abrubt_end = """\
   test\""" still inside the string\
 """
 
+multi_line.very_long_literal_string = '''Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'''
+multi_line.very_long_basic_string = """\
+  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod \
+  tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, \
+  quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo \
+  consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse \
+  cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat \
+  non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\
+"""
 
 # Empty lines are OK
 
