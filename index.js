@@ -19,7 +19,7 @@ const quotedToBare = /(?:(?<=\.)|^)\s*["']([A-Za-z0-9_-]+)["']/g;
 const renderKey = (key) =>
   key.replace(quotedToBare, (_, unquotedKey) => unquotedKey).trim();
 
-const printPrettyComment = (comment) => {
+const formatComment = (comment) => {
   if (!comment) return "";
   let i = 0;
   while (comment[i] === "#") i++;
@@ -31,11 +31,11 @@ const stringifyNestedTables = (object, key, replacers) => {
   if (Array.isArray(v)) {
     v.map((_, i) => stringifyNestedTables(object[key], i, replacers));
   } else if ("object" === typeof v) {
-    const id = replacers.push(printPrettyInlineTable(v, replacers, true));
+    const id = replacers.push(formatInlineTable(v, replacers, true));
     object[key] = "__object_to_replace__" + id;
   }
 };
-const printPrettyInlineTable = (table, replacers = [], skipReplace = false) => {
+const formatInlineTable = (table, replacers = [], skipReplace = false) => {
   for (const key of Object.keys(table)) {
     stringifyNestedTables(table, key, replacers);
   }
@@ -51,25 +51,25 @@ const printPrettyInlineTable = (table, replacers = [], skipReplace = false) => {
   return result;
 };
 
-function* printPrettyArray(indentationLevel, key, value, comment) {
+function* formatArray(indentationLevel, key, value, comment) {
   try {
     const values = TOML.parse("_key=" + value)._key.map((val) => {
       return "string" === typeof val || "number" === typeof val
         ? JSON.stringify(val)
         : Array.isArray(val)
         ? `[${val.join(", ")}]`
-        : printPrettyInlineTable(val);
+        : formatInlineTable(val);
     });
     const keyLine = indent(indentationLevel) + key.trim() + " = [";
     const oneLine = keyLine + values.join(", ") + "]";
     if (oneLine.length <= LINE_LENGTH_LIMIT) {
-      yield oneLine + printPrettyComment(comment);
+      yield oneLine + formatComment(comment);
     } else {
       yield keyLine;
       for (const value of values) {
         yield indent(indentationLevel + 1) + value + ",";
       }
-      yield indent(indentationLevel) + "]" + printPrettyComment(comment);
+      yield indent(indentationLevel) + "]" + formatComment(comment);
     }
   } catch (e) {
     console.warn(e);
@@ -77,14 +77,14 @@ function* printPrettyArray(indentationLevel, key, value, comment) {
       key +
       " = " +
       value +
-      printPrettyComment(comment);
+      formatComment(comment);
   }
 }
 
-function prettyPrintKeyAssignment(indentationLevel, key, value, comment) {
+function formatKeyAssignment(indentationLevel, key, value, comment) {
   try {
     const prettyValue = value.startsWith("{")
-      ? printPrettyInlineTable(TOML.parse("_key=" + value)._key)
+      ? formatInlineTable(TOML.parse("_key=" + value)._key)
       : value.trimRight();
 
     return (
@@ -92,7 +92,7 @@ function prettyPrintKeyAssignment(indentationLevel, key, value, comment) {
       renderKey(key) +
       " = " +
       prettyValue +
-      printPrettyComment(comment)
+      formatComment(comment)
     );
   } catch (e) {
     console.warn(e);
@@ -100,21 +100,21 @@ function prettyPrintKeyAssignment(indentationLevel, key, value, comment) {
   }
 }
 
-function* prettyPrintMultilineBasicString(
+function* formatMultilineBasicString(
   indentationLevel,
   fullString,
   comment,
   previousWork
 ) {
-  const lastLine = yield* prettyPrintMultilineBasicStringLines(
+  const lastLine = yield* formatMultilineBasicStringLines(
     indentationLevel + 1,
     fullString,
     previousWork
   );
   yield indent(indentationLevel + 1) + lastLine.join(" ") + "\\";
-  yield indent(indentationLevel) + '"""' + printPrettyComment(comment);
+  yield indent(indentationLevel) + '"""' + formatComment(comment);
 }
-function* prettyPrintMultilineBasicStringLines(
+function* formatMultilineBasicStringLines(
   indentationLevel,
   str,
   previousWork = []
@@ -163,9 +163,9 @@ export default async function* prettify(input) {
         if (usefulTOML.trimRight().endsWith("]")) {
           mode = NORMAL_MODE;
           const [, key, value] = buffer.match(keyValueDeclaration);
-          yield* printPrettyArray(indentationLevel, key, value, comment);
+          yield* formatArray(indentationLevel, key, value, comment);
         } else if (comment)
-          yield indent(indentationLevel) + printPrettyComment(comment).trim();
+          yield indent(indentationLevel) + formatComment(comment).trim();
         break;
 
       case MULTILINE_BASIC_STRING_MODE:
@@ -176,14 +176,14 @@ export default async function* prettify(input) {
           }
           if (EOS !== -1) {
             mode = NORMAL_MODE;
-            yield* prettyPrintMultilineBasicString(
+            yield* formatMultilineBasicString(
               indentationLevel,
               fullLine.substring(0, EOS),
               fullLine.substring(EOS + 3),
               buffer
             );
           } else {
-            buffer = yield* prettyPrintMultilineBasicStringLines(
+            buffer = yield* formatMultilineBasicStringLines(
               indentationLevel + 1,
               fullLine,
               buffer
@@ -198,7 +198,7 @@ export default async function* prettify(input) {
           if (EOS !== -1) {
             mode = NORMAL_MODE;
             yield fullLine.substring(0, EOS + 3) +
-              printPrettyComment(fullLine.substring(EOS + 3));
+              formatComment(fullLine.substring(EOS + 3));
           } else {
             yield fullLine;
           }
@@ -212,7 +212,7 @@ export default async function* prettify(input) {
 
         if (!usefulTOML) {
           if (comment)
-            yield indent(indentationLevel) + printPrettyComment(comment).trim();
+            yield indent(indentationLevel) + formatComment(comment).trim();
           else yield "";
         } else if (usefulTOML.startsWith("[")) {
           indentationLevel = usefulTOML.split(".").length;
@@ -223,25 +223,24 @@ export default async function* prettify(input) {
         } else if (value.startsWith("[")) {
           if (value.trimRight().endsWith("]")) {
             // single-line array declaration
-            yield* printPrettyArray(indentationLevel, key, value, comment);
+            yield* formatArray(indentationLevel, key, value, comment);
           } else {
             mode = MULTILINE_ARRAY_MODE;
             buffer = usefulTOML;
             if (comment)
-              yield indent(indentationLevel) +
-                printPrettyComment(comment).trim();
+              yield indent(indentationLevel) + formatComment(comment).trim();
           }
         } else if (value.startsWith('"""')) {
-          yield prettyPrintKeyAssignment(indentationLevel, key, '"""\\');
+          yield formatKeyAssignment(indentationLevel, key, '"""\\');
           if (singlelineMultilineStringDeclaration.test(value)) {
-            yield* prettyPrintMultilineBasicString(
+            yield* formatMultilineBasicString(
               indentationLevel,
               value.slice(3, -3),
               comment
             );
           } else {
             mode = MULTILINE_BASIC_STRING_MODE;
-            buffer = yield* prettyPrintMultilineBasicStringLines(
+            buffer = yield* formatMultilineBasicStringLines(
               indentationLevel + 1,
               value.substring(3) + (comment || "")
             );
@@ -251,14 +250,14 @@ export default async function* prettify(input) {
           !singlelineMultilineLiteralStringDeclaration.test(value)
         ) {
           mode = MULTILINE_LITERAL_STRING_MODE;
-          yield prettyPrintKeyAssignment(
+          yield formatKeyAssignment(
             indentationLevel,
             key,
             value + (comment || "")
             // comment is actually part of the literal string
           );
         } else {
-          yield prettyPrintKeyAssignment(indentationLevel, key, value, comment);
+          yield formatKeyAssignment(indentationLevel, key, value, comment);
         }
         break;
     }
