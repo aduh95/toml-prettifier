@@ -26,55 +26,65 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
  cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 '''
 multi_line.basic_string = """\
-  #This is not a comment Lorem ipsum dolor sit amet, consectetur adipiscing \
-  elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut \
-  enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut \
-  aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in \
-  voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint \
-  occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit \
-  anim id est laborum.\
+  \u0020 #This is not a comment\n\
+  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod \
+  tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, \
+  quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo \
+  consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse\n\
+  \u0020cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat \
+  cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id \
+  est laborum.\n\
 """
 multi_line.basic_string_no_comment = """\
   Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod \
   tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, \
   quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo \
-  consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse \
-  cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat \
-  non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\
+  consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse\n\
+  \u0020cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat \
+  cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id \
+  est laborum.\n\
 """
 multi_line.basic_string_starts_with_backslash = """\
-  \\ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod \
-  tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, \
-  quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo \
-  consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse \
-  cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat \
-  non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\
+  \\\n\
+  \u0020Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do \
+  eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim \
+  veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea \
+  commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit \
+  esse\n\
+  \u0020cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat \
+  cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id \
+  est laborum.\n\
 """
 multi_line.basic_string_starts_with_fake_ending = """\
-  this is not a single line string\""" Lorem ipsum dolor sit amet, consectetur \
-  adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna \
-  aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris \
-  nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in \
-  reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla \
-  pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui \
-  officia deserunt mollit anim id est laborum.\
+  this is not a single line string\"""\n\
+  \u0020Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do \
+  eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim \
+  veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea \
+  commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit \
+  esse\n\
+  \u0020cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat \
+  cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id \
+  est laborum.\n\
 """
 multi_line.basic_string_with_true_ending = """\
-  one line is split in several lines\""" one line is split in several \
-  lines\""" one line is split in several lines\"\
+  one line is split in several lines\"""\n\
+  one line is split in several lines\"""\n\
+  one line is split in several lines\"\
 """
 multi_line.literal_string_with_actual_comment = '''  #This is not a comment
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
  cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 ''' # This is a comment
 multi_line.basic_string_with_actual_comment = """\
-  #This is not a comment Lorem ipsum dolor sit amet, consectetur adipiscing \
-  elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut \
-  enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut \
-  aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in \
-  voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint \
-  occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit \
-  anim id est laborum.\
+  \u0020 #This is not a comment\n\
+  \u0020Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do \
+  eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim \
+  veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea \
+  commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit \
+  esse\n\
+  \u0020cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat \
+  cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id \
+  est laborum.\n\
 """ # This is a comment
 multi_line.basic_string_with_word_longer_than_wrap_column = """\
   qwertyuioplkjhgfdsazxcvbnmqwertyuioplkjhgfdsazxcvbnmqwertyuytrdfghgfvbdthjyfkjhrgesdgrabstvdfxhbxdsbfsbfdntbtsrvxdffxbdht \
@@ -83,9 +93,23 @@ multi_line.basic_string_with_word_longer_than_wrap_column = """\
 """
 
 multi_line.literal_string_abrubt_end = '''
-test\'''
+test\''' # outside the string
 multi_line.basic_string_abrubt_end = """\
-  test\""" still inside the string\
+  test\"""#inside the string\n\
+  still inside the string\
+""" # outside the string
+multi_line.basic_string_classic = """\
+  vrvev er  revreve re rv rfrv revr ervr rrv refer\
+"""
+multi_line.basic_string_with_genuine_line_return = """\
+  First paragraph.\n\
+  Second paragraph.\n\
+  \n\
+  \n\
+  Third Paragraph.\
+"""
+multi_line.basic_string_with_split_word = """\
+  Hello World!\
 """
 
 multi_line.very_long_literal_string = '''Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'''

@@ -59,8 +59,8 @@ await initTOMLWasm();
 There are no available configuration for the formatting.
 
 - Keys: unquote the keys when possible.
-- Multiline basic strings: All spaces will be ignored, the string will be kept
-  under 80 char per line. If you need spacing, use literal strings.
+- Multiline basic strings: wrapped to 80 char, and indented one level below the
+  opening and closing char sequence.
 - Multiline literal strings: No transformations are made.
 - Comments:
   - They respect indentation.

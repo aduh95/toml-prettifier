@@ -108,39 +108,110 @@ function* formatMultilineBasicString(
 ) {
   const lastLine = yield* formatMultilineBasicStringLines(
     indentationLevel + 1,
-    fullString,
+    fullString + "\\",
     previousWork
   );
-  yield indent(indentationLevel + 1) + lastLine.join(" ") + "\\";
+  // Ignore last line if empty.
+  if (lastLine && lastLine.words)
+    yield indent(indentationLevel + 1) + lastLine.words + "\\";
+
+  // Close string and print comment.
   yield indent(indentationLevel) + '"""' + formatComment(comment);
 }
+
+const formatMultilineBasicStringLineFirstWord = (wordOrLine) =>
+  wordOrLine.replace(
+    /^\s/,
+    (c) => `\\u${c.charCodeAt().toString(16).padStart(4, "0")}`
+  );
 function* formatMultilineBasicStringLines(
   indentationLevel,
-  str,
-  previousWork = []
+  line,
+  previousWork = { previousLineEndingBackslash: false, words: "" }
 ) {
   const indentation = indent(indentationLevel);
   const lineLengthLimit = LINE_LENGTH_LIMIT - indentation.length;
-  // Split ignoring empty strings.
-  const words = previousWork.concat(
-    str.split(/(?<!\\)\\\s|\s/).filter(Boolean)
-  );
 
-  let buffer = undefined;
+  line = previousWork.previousLineEndingBackslash
+    ? line.trimLeft()
+    : formatMultilineBasicStringLineFirstWord(line);
+
+  if (line === "\\") {
+    // Skip lines that contain only a backslash
+    return {
+      previousLineEndingBackslash: true,
+      words: previousWork.words,
+    };
+  }
+
+  // Handle ending backslash
+  let isEndingInBackslash = false;
+  let i = line.length;
+  while (line[--i] === "\\") isEndingInBackslash = !isEndingInBackslash;
+  if (isEndingInBackslash) line = line.slice(0, -1);
+  else line += "\\n";
+
+  const words = line.split(" ");
+
+  let buffer = previousWork.words
+    ? [previousWork.words + words.shift()]
+    : undefined;
   let currentLineLength = 2; // counting the trailing space+backslash
   for (const word of words) {
-    if (buffer === undefined) {
-      buffer = [word]; // in case the first word is really big
+    if (word.includes("\\n")) {
+      const lines = word.split("\\n");
+      const [firstLine] = lines;
+      const lastLineId = lines.length - 1;
+
+      let lineId = 0;
+      if (currentLineLength + firstLine.length <= lineLengthLimit) {
+        // cut the part that belongs to current line if it fits
+        if (buffer) buffer.push(firstLine);
+        else buffer = [formatMultilineBasicStringLineFirstWord(firstLine)];
+
+        yield indentation + buffer.join(" ") + "\\n\\";
+        lineId++; // Do not treat this line again
+      } else if (buffer) {
+        // yield previous line if exists
+        yield indentation + buffer.join(" ") + " \\";
+      }
+
+      // yield intermediate lines
+      for (let i = lineId; i < lastLineId; i++)
+        yield indentation +
+          formatMultilineBasicStringLineFirstWord(lines[i]) +
+          "\\n\\";
+
+      currentLineLength = 2;
+      // Start buffering the last line if non empty
+      if (lines[lastLineId] === "") {
+        buffer = undefined;
+      } else {
+        const firstWord = formatMultilineBasicStringLineFirstWord(
+          lines[lastLineId]
+        );
+        currentLineLength += firstWord.length + 1;
+        buffer = [firstWord];
+      }
+    } else if (buffer === undefined) {
+      const firstWord = formatMultilineBasicStringLineFirstWord(word);
+      currentLineLength += firstWord.length + 1;
+      buffer = [firstWord];
     } else if (currentLineLength + word.length <= lineLengthLimit) {
+      currentLineLength += word.length + 1;
       buffer.push(word);
     } else {
       yield indentation + buffer.join(" ") + " \\";
-      currentLineLength = 2; // counting the trailing space+backslash
-      buffer = [word];
+
+      const firstWord = formatMultilineBasicStringLineFirstWord(word);
+      currentLineLength = 2 + firstWord.length + 1;
+      buffer = [firstWord];
     }
-    currentLineLength += word.length + 1;
   }
-  return buffer;
+  return {
+    previousLineEndingBackslash: isEndingInBackslash,
+    words: (buffer || []).join(" "),
+  };
 }
 
 /**
@@ -240,10 +311,14 @@ export default async function* prettify(input) {
             );
           } else {
             mode = MULTILINE_BASIC_STRING_MODE;
-            buffer = yield* formatMultilineBasicStringLines(
-              indentationLevel + 1,
-              value.substring(3) + (comment || "")
-            );
+            buffer =
+              // newline immediately following the opening delimiter is trimmed
+              value.length === 3 && !comment
+                ? undefined
+                : yield* formatMultilineBasicStringLines(
+                    indentationLevel + 1,
+                    value.substring(3) + (comment || "")
+                  );
           }
         } else if (
           value.startsWith("'''") &&
