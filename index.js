@@ -51,7 +51,7 @@ const printPrettyInlineTable = (table, replacers = [], skipReplace = false) => {
   return result;
 };
 
-function* printPrettyArray(key, value, indentationLevel) {
+function* printPrettyArray(indentationLevel, key, value, comment) {
   try {
     const values = TOML.parse("_key=" + value)._key.map((val) => {
       return "string" === typeof val || "number" === typeof val
@@ -63,17 +63,21 @@ function* printPrettyArray(key, value, indentationLevel) {
     const keyLine = indent(indentationLevel) + key.trim() + " = [";
     const oneLine = keyLine + values.join(", ") + "]";
     if (oneLine.length <= LINE_LENGTH_LIMIT) {
-      yield oneLine;
+      yield oneLine + printPrettyComment(comment);
     } else {
       yield keyLine;
       for (const value of values) {
         yield indent(indentationLevel + 1) + value + ",";
       }
-      yield indent(indentationLevel) + "]";
+      yield indent(indentationLevel) + "]" + printPrettyComment(comment);
     }
   } catch (e) {
     console.warn(e);
-    yield indent(indentationLevel) + key + " = " + value;
+    yield indent(indentationLevel) +
+      key +
+      " = " +
+      value +
+      printPrettyComment(comment);
   }
 }
 
@@ -156,13 +160,12 @@ export default async function* prettify(input) {
     switch (mode) {
       case MULTILINE_ARRAY_MODE:
         buffer += usefulTOML;
-        if (comment)
-          yield indent(indentationLevel) + printPrettyComment(comment).trim();
-        if (usefulTOML.endsWith("]")) {
+        if (usefulTOML.trimRight().endsWith("]")) {
           mode = NORMAL_MODE;
           const [, key, value] = buffer.match(keyValueDeclaration);
-          yield* printPrettyArray(key, value, indentationLevel);
-        }
+          yield* printPrettyArray(indentationLevel, key, value, comment);
+        } else if (comment)
+          yield indent(indentationLevel) + printPrettyComment(comment).trim();
         break;
 
       case MULTILINE_BASIC_STRING_MODE:
@@ -218,14 +221,15 @@ export default async function* prettify(input) {
           // If TOML syntax is not recognized, give up for the current line
           yield fullLine;
         } else if (value.startsWith("[")) {
-          if (comment)
-            yield indent(indentationLevel) + printPrettyComment(comment).trim();
           if (value.trimRight().endsWith("]")) {
             // single-line array declaration
-            yield* printPrettyArray(key, value, indentationLevel);
+            yield* printPrettyArray(indentationLevel, key, value, comment);
           } else {
             mode = MULTILINE_ARRAY_MODE;
             buffer = usefulTOML;
+            if (comment)
+              yield indent(indentationLevel) +
+                printPrettyComment(comment).trim();
           }
         } else if (value.startsWith('"""')) {
           yield prettyPrintKeyAssignment(indentationLevel, key, '"""\\');

@@ -70,6 +70,12 @@ multi_line.very_long_basic_string ="""Lorem ipsum dolor sit amet, consectetur ad
 single_line.table = {nested={"nested"={nested="""table"""}}}
 single_line.array = [{nested=[{nested={'nested'=["""table""",7]}}]}]
 multi_line.array = ["long", "long", "long", "long", "long", "long", "long", "long", "long", "array"]
+single_line.long_array_with_comment = ["long", "long", "long", "long", "long", "long", "long", "long", "long", "array"]#comment
+multi_line.array_with_comment = [
+  "first",
+  "second",
+  "third",
+]#comment
 
 #Comment can be ugly too! 
 
