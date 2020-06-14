@@ -4,6 +4,9 @@
 "necessary.quotes"="should stay quoted"
 'necessary=quotes'="should stay quoted"
 
+"key \"containing\" backslash"=6
+'key \"containing" backslash\'=6
+
 '123456789'="should not stay quoted"
 "unnecessary".'quotes'="should not stay quoted"
 
