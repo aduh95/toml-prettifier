@@ -1,6 +1,6 @@
 {
   "name": "@aduh95/toml-prettifier",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Opinionated TOML code formatter",
   "main": "index.js",
   "types": "index.d.ts",
