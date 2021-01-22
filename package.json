@@ -28,8 +28,11 @@
   },
   "homepage": "https://github.com/aduh95/toml-prettifier#readme",
   "type": "module",
-  "dependencies": {
+  "devDependencies": {
     "@aduh95/toml": "^0.3.2"
+  },
+  "peerDependencies": {
+    "@aduh95/toml": "*"
   },
   "engines": {
     "node": "^12.17.0 || >=13.2.0"
