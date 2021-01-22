@@ -1,7 +1,7 @@
 {
   "imports": {
     "std:testing": "https://deno.land/std/testing/asserts.ts",
-    "@aduh95/toml": "https://unpkg.com/@aduh95/toml@0.3.2/web/toml2js.js",
+    "@aduh95/toml": "https://unpkg.com/@aduh95/toml@0.4.0/web/toml2js.js",
     "@aduh95/toml-prettifier": "../index.js"
   }
 }

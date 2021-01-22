@@ -29,7 +29,7 @@
   "homepage": "https://github.com/aduh95/toml-prettifier#readme",
   "type": "module",
   "devDependencies": {
-    "@aduh95/toml": "^0.3.2"
+    "@aduh95/toml": "^0.4.0"
   },
   "peerDependencies": {
     "@aduh95/toml": "*"

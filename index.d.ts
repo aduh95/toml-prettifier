@@ -1,1 +1,3 @@
-export default function prettify(input: AsyncIterator<string>): AsyncGenerator<string, void, unknown>;
+export default function prettify(
+  input: AsyncIterable<string> | Iterable<string>
+): AsyncGenerator<string, void, unknown>;
